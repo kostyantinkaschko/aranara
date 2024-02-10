@@ -29,13 +29,12 @@
 
         <div id="multipliers">
           <p>Score Multiplier: <span id="scoreMultiplier">x1</span></p>
-          <button id="x2Button" disabled>x2 (Cost: 100)</button>
-          <button id="x4Button" disabled>x4 (Cost: 200)</button>
+          <p id="x2CostDisplay">x2 (Cost: <span id="x2Cost">100</span>, Purchases: <span id="x2Purchases">0</span>)</p>
+          <button id="x2Button">Buy x2</button>
+          <p id="x4CostDisplay">x4 (Cost: <span id="x4Cost">200</span>, Purchases: <span id="x4Purchases">0</span>)</p>
+          <button id="x4Button">Buy x4</button>
           <p>
-            <strong
-              >I advise you to pump only x4, because you can make only 4
-              purchases in the store.</strong
-            >
+            <strong>I advise you to pump only x4 because you can make only 4 purchases in the store.</strong>
           </p>
         </div>
         <div id="exp-level">
@@ -69,17 +68,24 @@
       }
 
       function calculateMultiplierCost(multiplier) {
-        // Базова ціна множителя
         let baseCost = multiplier === 2 ? 100 : 200;
-        // Збільшення ціни після купівлі
         return Math.round(
           baseCost * 1.5 ** player.multiplierPurchases[multiplier]
         );
       }
 
       function updateMultiplierCost() {
-        x2Button.textContent = `x2 (Cost: ${calculateMultiplierCost(2)})`;
-        x4Button.textContent = `x4 (Cost: ${calculateMultiplierCost(4)})`;
+        const x2CostDisplay = document.getElementById("x2CostDisplay");
+        const x4CostDisplay = document.getElementById("x4CostDisplay");
+
+        x2CostDisplay.textContent = `x2 (Cost: ${calculateMultiplierCost(2)}, Purchases: ${player.multiplierPurchases[2]})`;
+        x4CostDisplay.textContent = `x4 (Cost: ${calculateMultiplierCost(4)}, Purchases: ${player.multiplierPurchases[4]})`;
+
+        const x2PurchasesDisplay = document.getElementById("x2Purchases");
+        const x4PurchasesDisplay = document.getElementById("x4Purchases");
+
+        x2PurchasesDisplay.textContent = player.multiplierPurchases[2];
+        x4PurchasesDisplay.textContent = player.multiplierPurchases[4];
       }
 
       function updateCurrencyDisplay() {
@@ -87,8 +93,9 @@
       }
 
       function updateScoreMultiplierDisplay() {
-        scoreMultiplierDisplay.textContent = `x${player.scoreMultiplier}`;
+        scoreMultiplierDisplay.textContent = `Score Multiplier: x${player.scoreMultiplier}`;
       }
+
       class Player {
         constructor() {
           this.score = 0;
@@ -106,6 +113,8 @@
             4: 0,
           };
         }
+
+        
 
         updateHighscore() {
           highscoreDisplay.textContent = `Highscore: ${this.highscore}`;
@@ -143,16 +152,14 @@
           rewardItem.textContent = `Level ${this.level} Reward: ${reward} XP`;
           expRewardsList.appendChild(rewardItem);
 
-          // Check for every 15 levels and remove previous messages
           if (this.level % 15 === 0) {
             setTimeout(() => {
               const rewardsList = document.getElementById("rewards-list");
               while (rewardsList.firstChild) {
                 rewardsList.removeChild(rewardsList.firstChild);
               }
-            }, 5000); // Remove messages after 5 seconds
+            }, 5000);
 
-            // Нагородження грошима кожні 15 рівнів
             this.currency += 1;
             this.updateCurrency();
             localStorage.setItem("currency", this.currency);
@@ -160,6 +167,7 @@
         }
       }
 
+      // Визначте об'єкт player після визначення класу Player
       const player = new Player();
 
       const board = document.getElementById("board");
@@ -183,7 +191,6 @@
           player.scoreMultiplier *= multiplier;
           player.multiplierPurchases[multiplier] += 1;
 
-          // Зберегти дані в локальне сховище
           localStorage.setItem("currency", player.currency);
           localStorage.setItem("scoreMultiplier", player.scoreMultiplier);
           saveMultiplierPurchases();
@@ -194,11 +201,26 @@
         } else if (player.multiplierPurchases[multiplier] >= 4) {
           alert("You can't buy more than 4 of the same multiplier!");
         } else {
-          alert("Not enough currency to buy the multiplier!");
+          alert(
+            `Not enough currency to buy the ${
+              multiplier === 2 ? "x2" : "x4"
+            } multiplier!`
+          );
         }
       }
 
-      // Restore saved data
+      function updateMultiplierButtonsText() {
+        const x2Button = document.getElementById("x2Button");
+        const x4Button = document.getElementById("x4Button");
+
+        const x2Cost = calculateMultiplierCost(2);
+        const x4Cost = calculateMultiplierCost(4);
+
+        const x2Purchases = player.multiplierPurchases[2];
+        const x4Purchases = player.multiplierPurchases[4];
+
+      }
+      updateMultiplierButtonsText();
       player.updateHighscore();
       player.updateLevel();
       player.updateExperience();
@@ -237,22 +259,17 @@
           player.updateHighscore();
         }
 
-        // Play gunshot sound
         gunshotSound.currentTime = 0;
         gunshotSound.play();
 
-        // Animate dart movement
         animateDart(dart, boardRect);
 
-        // Check for level up
         if (player.experience >= player.expToNextLevel) {
           player.levelUp();
-          // Save data after leveling up
           localStorage.setItem("level", player.level);
           localStorage.setItem("experience", player.experience);
         }
 
-        // Update currency after each throw (for demonstration purposes)
         player.currency += 1;
         player.updateCurrency();
         localStorage.setItem("currency", player.currency);
@@ -264,12 +281,12 @@
         const outerBullseyeRadius = maxRadius * 0.2;
 
         if (distance < innerBullseyeRadius) {
-          return 50 * player.scoreMultiplier; // Застосування множника до балів
+          return 50 * player.scoreMultiplier;
         } else if (distance < outerBullseyeRadius) {
-          return 25 * player.scoreMultiplier; // Застосування множника до балів
+          return 25 * player.scoreMultiplier;
         } else {
           const percentageFromCenter = 1 - distance / maxRadius;
-          return Math.round(50 * percentageFromCenter * player.scoreMultiplier); // Застосування множника до балів
+          return Math.round(50 * percentageFromCenter * player.scoreMultiplier);
         }
       }
 
@@ -306,15 +323,8 @@
       resetButton.addEventListener("click", resetProgress);
 
       function resetProgress() {
-        // Скидання прогресу
-        localStorage.removeItem("highscore");
-        localStorage.removeItem("level");
-        localStorage.removeItem("experience");
-        localStorage.removeItem("currency");
-        localStorage.removeItem("scoreMultiplier");
-        localStorage.removeItem("multiplierPurchases");
+        localStorage.clear();
 
-        // Оновлення інтерфейсу
         player.score = 0;
         player.highscore = 0;
         player.level = 1;
@@ -327,7 +337,6 @@
           4: 0,
         };
 
-        // Оновлення відображення
         player.updateHighscore();
         player.updateLevel();
         player.updateExperience();
@@ -336,12 +345,35 @@
         updateScoreMultiplierDisplay();
         updateMultiplierCost();
 
-        // Очистка списку нагород
         const rewardsList = document.getElementById("rewards-list");
         while (rewardsList.firstChild) {
           rewardsList.removeChild(rewardsList.firstChild);
         }
       }
+
+      function updateAllStats() {
+        player.updateHighscore();
+        player.updateLevel();
+        player.updateExperience();
+        player.updateExpToNextLevel();
+        player.updateCurrency();
+        updateScoreMultiplierDisplay();
+        updateMultiplierCost();
+        updateMultiplierButtonsText(); // Оновлення тексту на кнопках множників
+      }
+
+      // Оновлення всієї статистики при завантаженні сторінки
+      for (let i = 1; i <= 5; ) {
+        updateAllStats();
+        updateMultiplierButtonsText();
+      }
+      x2Button.addEventListener("click", function () {
+        updateAllStats();
+      });
+
+      x4Button.addEventListener("click", function () {
+        updateAllStats();
+      });
     </script>
   </body>
 </html>
