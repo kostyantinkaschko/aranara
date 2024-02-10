@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Аранари гади!</title>
     <style>
-      body{
+      body {
         cursor: url(img/cursor.cur), auto;
       }
-      
+
       #board {
         width: 465px;
         height: 400px;
@@ -30,17 +30,32 @@
         margin-top: 20px;
         font-size: 20px;
       }
+
+      #highscore {
+        margin-top: 10px;
+        font-size: 16px;
+      }
     </style>
   </head>
   <body>
     <div id="board"></div>
     <div id="score">Score: 0</div>
+    <div id="highscore">Highscore: 0</div>
+
+    <audio id="gunshot">
+      <source src="audio/gunshot.mp3" type="audio/mpeg" />
+    </audio>
 
     <script>
       const board = document.getElementById("board");
       const scoreDisplay = document.getElementById("score");
+      const highscoreDisplay = document.getElementById("highscore");
+      const gunshotSound = document.getElementById("gunshot");
 
       let score = 0;
+      let highscore = localStorage.getItem("highscore") || 0;
+
+      updateHighscore();
 
       board.addEventListener("click", throwDart);
 
@@ -64,6 +79,16 @@
         score += calculateScore(distanceFromCenter);
 
         scoreDisplay.textContent = `Score: ${score}`;
+
+        if (score > highscore) {
+          highscore = score;
+          localStorage.setItem("highscore", highscore);
+          updateHighscore();
+        }
+
+        // Play gunshot sound
+        gunshotSound.currentTime = 0; // Скидання часу відтворення на початок
+        gunshotSound.play();
 
         // Animate dart movement
         animateDart(dart, boardRect);
@@ -110,6 +135,10 @@
         }
 
         requestAnimationFrame(animate);
+      }
+
+      function updateHighscore() {
+        highscoreDisplay.textContent = `Highscore: ${highscore}`;
       }
     </script>
   </body>
