@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Аранари гади!</title>
+    <style>
+      body{
+        cursor: url(img/cursor.cur), auto;
+      }
+      
+      #board {
+        width: 465px;
+        height: 400px;
+        background-image: url(img/aranara.png);
+        background-size: 29rem;
+        background-position: 0 -58px;
+        position: relative;
+      }
+
+      .dart {
+        width: 20px;
+        height: 20px;
+        background: url(img/pointer.png);
+        background-size: cover;
+        position: absolute;
+      }
+
+      #score {
+        margin-top: 20px;
+        font-size: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="board"></div>
+    <div id="score">Score: 0</div>
+
+    <script>
+      const board = document.getElementById("board");
+      const scoreDisplay = document.getElementById("score");
+
+      let score = 0;
+
+      board.addEventListener("click", throwDart);
+
+      function throwDart(event) {
+        const dart = document.createElement("div");
+        dart.className = "dart";
+        board.appendChild(dart);
+
+        const dartRect = dart.getBoundingClientRect();
+        const boardRect = board.getBoundingClientRect();
+        const x = event.clientX - dartRect.width / 2;
+        const y = event.clientY - dartRect.height / 2;
+
+        dart.style.left = `${x}px`;
+        dart.style.top = `${y}px`;
+
+        const distanceFromCenter = Math.sqrt(
+          (x + dartRect.width / 2 - boardRect.width / 2) ** 2 +
+            (y + dartRect.height / 2 - boardRect.height / 2) ** 2
+        );
+        score += calculateScore(distanceFromCenter);
+
+        scoreDisplay.textContent = `Score: ${score}`;
+
+        // Animate dart movement
+        animateDart(dart, boardRect);
+      }
+
+      function calculateScore(distance) {
+        const maxRadius = board.clientWidth / 2;
+        const innerBullseyeRadius = maxRadius * 0.1;
+        const outerBullseyeRadius = maxRadius * 0.2;
+
+        if (distance < innerBullseyeRadius) {
+          return 50;
+        } else if (distance < outerBullseyeRadius) {
+          return 25;
+        } else {
+          const percentageFromCenter = 1 - distance / maxRadius;
+          return Math.round(50 * percentageFromCenter);
+        }
+      }
+
+      function animateDart(dart, boardRect) {
+        const duration = 500; // milliseconds
+        const startX = parseFloat(dart.style.left);
+        const startY = parseFloat(dart.style.top);
+        const endX = boardRect.width / 2 - dart.clientWidth / 2;
+        const endY = boardRect.height / 2 - dart.clientHeight / 2;
+        const startTime = new Date().getTime();
+
+        function animate() {
+          const currentTime = new Date().getTime();
+          const progress = Math.min((currentTime - startTime) / duration, 1);
+
+          const newX = startX + (endX - startX) * progress;
+          const newY = startY + (endY - startY) * progress;
+
+          dart.style.left = `${newX}px`;
+          dart.style.top = `${newY}px`;
+
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            dart.remove();
+          }
+        }
+
+        requestAnimationFrame(animate);
+      }
+    </script>
+  </body>
+</html>
