@@ -2,11 +2,6 @@ body {
     cursor: url(../img/cursor.cur), auto;
 }
 
-.blocks{
-    display: flex;
-    column-gap: 10rem;
-    margin-top: 15px;
-}
 
 #rewards-list{
     display: flex;
@@ -39,4 +34,12 @@ body {
 #highscore {
     margin-top: 10px;
     font-size: 16px;
+}
+
+@media screen and (min-width: 860px){
+    .blocks{
+        display: flex;
+        column-gap: 10rem;
+        margin-top: 15px;
+    }
 }

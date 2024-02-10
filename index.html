@@ -28,7 +28,7 @@
         </div>
 
         <div id="multipliers">
-          <p>Score Multiplier: <span id="scoreMultiplier">x1</span></p>
+          <span id="scoreMultiplier">x1</span>
           <p id="x2CostDisplay">x2 (Cost: <span id="x2Cost">100</span>, Purchases: <span id="x2Purchases">0</span>)</p>
           <button id="x2Button">Buy x2</button>
           <p id="x4CostDisplay">x4 (Cost: <span id="x4Cost">200</span>, Purchases: <span id="x4Purchases">0</span>)</p>
@@ -114,8 +114,6 @@
           };
         }
 
-        
-
         updateHighscore() {
           highscoreDisplay.textContent = `Highscore: ${this.highscore}`;
         }
@@ -137,7 +135,7 @@
         }
 
         calculateExpRequiredForNextLevel() {
-          return Math.round(40 * 1.1 ** (this.level - 1));
+          return Math.round(40 * 2 ** (this.level - 1));
         }
 
         levelUp() {
@@ -219,6 +217,8 @@
         const x2Purchases = player.multiplierPurchases[2];
         const x4Purchases = player.multiplierPurchases[4];
 
+        x2Button.textContent = `Buy x2 (Cost: ${x2Cost}, Purchases: ${x2Purchases})`;
+        x4Button.textContent = `Buy x4 (Cost: ${x4Cost}, Purchases: ${x4Purchases})`;
       }
       updateMultiplierButtonsText();
       player.updateHighscore();
@@ -344,11 +344,7 @@
         player.updateCurrency();
         updateScoreMultiplierDisplay();
         updateMultiplierCost();
-
-        const rewardsList = document.getElementById("rewards-list");
-        while (rewardsList.firstChild) {
-          rewardsList.removeChild(rewardsList.firstChild);
-        }
+        updateMultiplierButtonsText(); // Оновлення тексту на кнопках множників
       }
 
       function updateAllStats() {
@@ -363,7 +359,7 @@
       }
 
       // Оновлення всієї статистики при завантаженні сторінки
-      for (let i = 1; i <= 5; ) {
+      for (let i = 1; i <= 5; i++) {
         updateAllStats();
         updateMultiplierButtonsText();
       }
