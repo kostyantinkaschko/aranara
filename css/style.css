@@ -1,0 +1,42 @@
+body {
+    cursor: url(../img/cursor.cur), auto;
+}
+
+.blocks{
+    display: flex;
+    column-gap: 10rem;
+    margin-top: 15px;
+}
+
+#rewards-list{
+    display: flex;
+    flex-direction: column-reverse;
+
+}
+
+#board {
+    width: 465px;
+    height: 400px;
+    background-image: url(../img/aranara.png);
+    background-size: 29rem;
+    background-position: 0 -58px;
+    position: relative;
+}
+
+.dart {
+    width: 20px;
+    height: 20px;
+    background: url(../img/pointer.png);
+    background-size: cover;
+    position: absolute;
+}
+
+#score {
+    margin-top: 20px;
+    font-size: 20px;
+}
+
+#highscore {
+    margin-top: 10px;
+    font-size: 16px;
+}
