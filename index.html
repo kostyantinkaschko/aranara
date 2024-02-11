@@ -1,405 +1,375 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Aranar killer</title>
-  <link rel="stylesheet" href="css/style.css" />
-</head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aranar killer</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
 
-<body>
-  <button id="resetButton">Reset Progress</button>
-  <div class="blocks">
-    <div class="center-block">
-      <div id="board"></div>
-      <div id="score">
-        <p>Score: 0</p>
+  <body>
+    <button id="resetButton">Reset Progress</button>
+    <div class="blocks">
+      <div class="center-block">
+        <div id="board"></div>
+        <div id="score">
+          <p>Score: 0</p>
+        </div>
+        <div id="highscore">
+          <p>Highscore: 0</p>
+        </div>
+        <audio id="gunshot">
+          <source src="audio/gunshot.mp3" type="audio/mpeg" />
+        </audio>
       </div>
-      <div id="highscore">
-        <p>Highscore: 0</p>
+      <div class="right-block">
+        <div id="currency">
+          <p>Money: <span id="currencyAmount">0</span></p>
+        </div>
+
+        <div id="multipliers">
+          <span id="scoreMultiplier">x1</span>
+          <p id="x2CostDisplay">x2 (Cost: <span id="x2Cost">100</span>, Purchases: <span id="x2Purchases">0</span>)</p>
+          <button id="x2Button">Buy x2</button>
+          <p id="x4CostDisplay">x4 (Cost: <span id="x4Cost">200</span>, Purchases: <span id="x4Purchases">0</span>)</p>
+          <button id="x4Button">Buy x4</button>
+          <p>
+            <strong>I advise you to pump only x4 because you can make only 4 purchases in the store.</strong>
+          </p>
+        </div>
+        <div id="exp-level">
+          <p>Level: <span id="level">1</span></p>
+          <p>Experience: <span id="experience">0</span></p>
+          <p>Experience to Next Level: <span id="expToNextLevel">40</span></p>
+          <p>Experience Rewards:</p>
+          <ul id="rewards-list"></ul>
+        </div>
       </div>
-      <audio id="gunshot">
-        <source src="audio/gunshot.mp3" type="audio/mpeg" />
-      </audio>
     </div>
-    <div class="right-block">
-      <div id="currency">
-        <p>Money: <span id="currencyAmount">0</span></p>
-      </div>
+    <script>
+      const currencyDisplay = document.getElementById("currencyAmount");
+      const x2Button = document.getElementById("x2Button");
+      const x4Button = document.getElementById("x4Button");
+      const scoreMultiplierDisplay = document.getElementById("scoreMultiplier");
 
-      <div id="multipliers">
-        <span id="scoreMultiplier">x1</span>
-        <p id="x2CostDisplay">x2 (Cost: <span id="x2Cost">100</span>, Purchases: <span id="x2Purchases">0</span>)</p>
-        <button id="x2Button">Buy x2</button>
-        <p id="x4CostDisplay">x4 (Cost: <span id="x4Cost">200</span>, Purchases: <span id="x4Purchases">0</span>)</p>
-        <button id="x4Button">Buy x4</button>
-        <p>
-          <strong>I advise you to pump only x4 because you can make only 4 purchases in the store.</strong>
-        </p>
-      </div>
-      <div id="exp-level">
-        <p>Level: <span id="level">1</span></p>
-        <p>Experience: <span id="experience">0</span></p>
-        <p>Experience to Next Level: <span id="expToNextLevel">40</span></p>
-        <p>Experience Rewards:</p>
-        <ul id="rewards-list"></ul>
-      </div>
-    </div>
-  </div>
-  <script>
-    const currencyDisplay = document.getElementById("currencyAmount");
-    const x2Button = document.getElementById("x2Button");
-    const x4Button = document.getElementById("x4Button");
-    const scoreMultiplierDisplay = document.getElementById("scoreMultiplier");
+      x2Button.addEventListener("click", function (event) {
+        buyMultiplier(event);
+      });
 
-    x2Button.addEventListener("click", function (event) {
-      buyMultiplier(event);
-    });
+      x4Button.addEventListener("click", function (event) {
+        buyMultiplier(event);
+      });
 
-    x4Button.addEventListener("click", function (event) {
-      buyMultiplier(event);
-    });
-
-    let clickCount = 0;
-    let lastClickTime = 0;
-    let progressBlocked = false;
-
-    document.getElementById("board").addEventListener("click", function () {
-      if (progressBlocked) return; // Якщо прогрес заблоковано, вийти з функції
-
-      const currentTime = new Date().getTime();
-      clickCount++;
-
-      if (currentTime - lastClickTime < 1000) {
-        // Менше ніж секунда між кліками
-        if (clickCount > 40) {
-          // Блокування гравця
-          alert("You are clicking too fast. Progress blocked!");
-          progressBlocked = true;
-          setTimeout(() => {
-            progressBlocked = false;
-          }, 1000);
-          resetProgress(); // Або викличте будь-яку функцію, яка заблокує гравця
-        }
-      } else {
-        // Пройшла секунда, скидаємо лічильник
-        clickCount = 1;
+      function saveMultiplierPurchases() {
+        localStorage.setItem(
+          "multiplierPurchases",
+          JSON.stringify(player.multiplierPurchases)
+        );
       }
 
-      lastClickTime = currentTime;
-    });
+      function calculateMultiplierCost(multiplier) {
+        let baseCost = multiplier === 2 ? 100 : 200;
+        return Math.round(
+          baseCost * 1.5 ** player.multiplierPurchases[multiplier]
+        );
+      }
 
-    function saveMultiplierPurchases() {
-      localStorage.setItem(
-        "multiplierPurchases",
-        JSON.stringify(player.multiplierPurchases)
-      );
-    }
+      function updateMultiplierCost() {
+        const x2CostDisplay = document.getElementById("x2CostDisplay");
+        const x4CostDisplay = document.getElementById("x4CostDisplay");
 
-    function calculateMultiplierCost(multiplier) {
-      let baseCost = multiplier === 2 ? 100 : 200;
-      return Math.round(
-        baseCost * 1.5 ** player.multiplierPurchases[multiplier]
-      );
-    }
+        x2CostDisplay.textContent = `x2 (Cost: ${calculateMultiplierCost(2)}, Purchases: ${player.multiplierPurchases[2]})`;
+        x4CostDisplay.textContent = `x4 (Cost: ${calculateMultiplierCost(4)}, Purchases: ${player.multiplierPurchases[4]})`;
 
-    function updateMultiplierCost() {
-      const x2CostDisplay = document.getElementById("x2CostDisplay");
-      const x4CostDisplay = document.getElementById("x4CostDisplay");
+        const x2PurchasesDisplay = document.getElementById("x2Purchases");
+        const x4PurchasesDisplay = document.getElementById("x4Purchases");
 
-      x2CostDisplay.textContent = `x2 (Cost: ${calculateMultiplierCost(2)}, Purchases: ${player.multiplierPurchases[2]})`;
-      x4CostDisplay.textContent = `x4 (Cost: ${calculateMultiplierCost(4)}, Purchases: ${player.multiplierPurchases[4]})`;
+        x2PurchasesDisplay.textContent = player.multiplierPurchases[2];
+        x4PurchasesDisplay.textContent = player.multiplierPurchases[4];
+      }
 
-      const x2PurchasesDisplay = document.getElementById("x2Purchases");
-      const x4PurchasesDisplay = document.getElementById("x4Purchases");
+      function updateCurrencyDisplay() {
+        currencyDisplay.textContent = player.currency;
+      }
 
-      x2PurchasesDisplay.textContent = player.multiplierPurchases[2];
-      x4PurchasesDisplay.textContent = player.multiplierPurchases[4];
-    }
+      function updateScoreMultiplierDisplay() {
+        scoreMultiplierDisplay.textContent = `Score Multiplier: x${player.scoreMultiplier}`;
+      }
 
-    function updateCurrencyDisplay() {
-      currencyDisplay.textContent = player.currency;
-    }
+      class Player {
+        constructor() {
+          this.score = 0;
+          this.highscore = parseInt(localStorage.getItem("highscore")) || 0;
+          this.level = parseInt(localStorage.getItem("level")) || 1;
+          this.experience = parseInt(localStorage.getItem("experience")) || 0;
+          this.expToNextLevel = this.calculateExpRequiredForNextLevel();
+          this.currency = parseInt(localStorage.getItem("currency")) || 0;
+          this.scoreMultiplier =
+            parseInt(localStorage.getItem("scoreMultiplier")) || 1;
+          this.multiplierPurchases = JSON.parse(
+            localStorage.getItem("multiplierPurchases")
+          ) || {
+            2: 0,
+            4: 0,
+          };
+        }
 
-    function updateScoreMultiplierDisplay() {
-      scoreMultiplierDisplay.textContent = `Score Multiplier: x${player.scoreMultiplier}`;
-    }
+        updateHighscore() {
+          highscoreDisplay.textContent = `Highscore: ${this.highscore}`;
+        }
 
-    class Player {
-      constructor() {
-        this.score = 0;
-        this.highscore = parseInt(localStorage.getItem("highscore")) || 0;
-        this.level = parseInt(localStorage.getItem("level")) || 1;
-        this.experience = parseInt(localStorage.getItem("experience")) || 0;
-        this.expToNextLevel = this.calculateExpRequiredForNextLevel();
-        this.currency = parseInt(localStorage.getItem("currency")) || 0;
-        this.scoreMultiplier =
-          parseInt(localStorage.getItem("scoreMultiplier")) || 1;
-        this.multiplierPurchases = JSON.parse(
-          localStorage.getItem("multiplierPurchases")
-        ) || {
+        updateLevel() {
+          levelDisplay.textContent = this.level;
+        }
+
+        updateExperience() {
+          experienceDisplay.textContent = this.experience;
+        }
+
+        updateCurrency() {
+          currencyDisplay.textContent = this.currency;
+        }
+
+        updateExpToNextLevel() {
+          expToNextLevelDisplay.textContent = this.expToNextLevel;
+        }
+
+        calculateExpRequiredForNextLevel() {
+          return Math.round(40 * 6 ** (this.level - 1));
+        }
+
+        levelUp() {
+          this.level++;
+          this.expToNextLevel = this.calculateExpRequiredForNextLevel();
+          this.updateLevel();
+          this.updateExpToNextLevel();
+
+          const reward = this.level * 100;
+
+          const rewardItem = document.createElement("li");
+          rewardItem.textContent = `Level ${this.level} Reward: ${reward} XP`;
+          expRewardsList.appendChild(rewardItem);
+
+          if (this.level % 15 === 0) {
+            setTimeout(() => {
+              const rewardsList = document.getElementById("rewards-list");
+              while (rewardsList.firstChild) {
+                rewardsList.removeChild(rewardsList.firstChild);
+              }
+            }, 5000);
+
+            this.currency += 1;
+            this.updateCurrency();
+            localStorage.setItem("currency", this.currency);
+          }
+        }
+      }
+
+      // Визначте об'єкт player після визначення класу Player
+      const player = new Player();
+
+      const board = document.getElementById("board");
+      const scoreDisplay = document.getElementById("score");
+      const highscoreDisplay = document.getElementById("highscore");
+      const levelDisplay = document.getElementById("level");
+      const experienceDisplay = document.getElementById("experience");
+      const expToNextLevelDisplay = document.getElementById("expToNextLevel");
+      const expRewardsList = document.getElementById("rewards-list");
+      const gunshotSound = document.getElementById("gunshot");
+
+      function buyMultiplier(event) {
+        const multiplier = event.target.id === "x2Button" ? 2 : 4;
+        const cost = calculateMultiplierCost(multiplier);
+
+        if (
+          player.currency >= cost &&
+          player.multiplierPurchases[multiplier] < 4
+        ) {
+          player.currency -= cost;
+          player.scoreMultiplier *= multiplier;
+          player.multiplierPurchases[multiplier] += 1;
+
+          localStorage.setItem("currency", player.currency);
+          localStorage.setItem("scoreMultiplier", player.scoreMultiplier);
+          saveMultiplierPurchases();
+
+          updateCurrencyDisplay();
+          updateScoreMultiplierDisplay();
+          updateMultiplierCost();
+        } else if (player.multiplierPurchases[multiplier] >= 4) {
+          alert("You can't buy more than 4 of the same multiplier!");
+        } else {
+          alert(
+            `Not enough currency to buy the ${
+              multiplier === 2 ? "x2" : "x4"
+            } multiplier!`
+          );
+        }
+      }
+
+      function updateMultiplierButtonsText() {
+        const x2Button = document.getElementById("x2Button");
+        const x4Button = document.getElementById("x4Button");
+
+        const x2Cost = calculateMultiplierCost(2);
+        const x4Cost = calculateMultiplierCost(4);
+
+        const x2Purchases = player.multiplierPurchases[2];
+        const x4Purchases = player.multiplierPurchases[4];
+
+        x2Button.textContent = `Buy x2 (Cost: ${x2Cost}, Purchases: ${x2Purchases})`;
+        x4Button.textContent = `Buy x4 (Cost: ${x4Cost}, Purchases: ${x4Purchases})`;
+      }
+      updateMultiplierButtonsText();
+      player.updateHighscore();
+      player.updateLevel();
+      player.updateExperience();
+      player.updateExpToNextLevel();
+      player.updateCurrency();
+
+      board.addEventListener("click", throwDart);
+
+      function throwDart(event) {
+        const dart = document.createElement("div");
+        dart.className = "dart";
+        board.appendChild(dart);
+
+        const dartRect = dart.getBoundingClientRect();
+        const boardRect = board.getBoundingClientRect();
+        const x = event.clientX - dartRect.width / 2;
+        const y = event.clientY - dartRect.height / 2;
+
+        dart.style.left = `${x}px`;
+        dart.style.top = `${y}px`;
+
+        const distanceFromCenter = Math.sqrt(
+          (x + dartRect.width / 2 - boardRect.width / 2) ** 2 +
+            (y + dartRect.height / 2 - boardRect.height / 2) ** 2
+        );
+
+        player.score += calculateScore(distanceFromCenter);
+        player.experience += calculateScore(distanceFromCenter);
+
+        scoreDisplay.textContent = `Score: ${player.score}`;
+        experienceDisplay.textContent = player.experience;
+
+        if (player.score > player.highscore) {
+          player.highscore = player.score;
+          localStorage.setItem("highscore", player.highscore);
+          player.updateHighscore();
+        }
+
+        gunshotSound.currentTime = 0;
+        gunshotSound.play();
+
+        animateDart(dart, boardRect);
+
+        if (player.experience >= player.expToNextLevel) {
+          player.levelUp();
+          localStorage.setItem("level", player.level);
+          localStorage.setItem("experience", player.experience);
+        }
+
+        player.currency += 1;
+        player.updateCurrency();
+        localStorage.setItem("currency", player.currency);
+      }
+
+      function calculateScore(distance) {
+        const maxRadius = board.clientWidth / 2;
+        const innerBullseyeRadius = maxRadius * 0.1;
+        const outerBullseyeRadius = maxRadius * 0.2;
+
+        if (distance < innerBullseyeRadius) {
+          return 50 * player.scoreMultiplier;
+        } else if (distance < outerBullseyeRadius) {
+          return 25 * player.scoreMultiplier;
+        } else {
+          const percentageFromCenter = 1 - distance / maxRadius;
+          return Math.round(50 * percentageFromCenter * player.scoreMultiplier);
+        }
+      }
+
+      function animateDart(dart, boardRect) {
+        const duration = 500;
+        const startX = parseFloat(dart.style.left);
+        const startY = parseFloat(dart.style.top);
+        const endX = boardRect.width / 2 - dart.clientWidth / 2;
+        const endY = boardRect.height / 2 - dart.clientHeight / 2;
+        const startTime = new Date().getTime();
+
+        function animate() {
+          const currentTime = new Date().getTime();
+          const progress = Math.min((currentTime - startTime) / duration, 1);
+
+          const newX = startX + (endX - startX) * progress;
+          const newY = startY + (endY - startY) * progress;
+
+          dart.style.left = `${newX}px`;
+          dart.style.top = `${newY}px`;
+
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            dart.remove();
+          }
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      const resetButton = document.getElementById("resetButton");
+
+      resetButton.addEventListener("click", resetProgress);
+
+      function resetProgress() {
+        localStorage.clear();
+
+        player.score = 0;
+        player.highscore = 0;
+        player.level = 1;
+        player.experience = 0;
+        player.expToNextLevel = player.calculateExpRequiredForNextLevel();
+        player.currency = 0;
+        player.scoreMultiplier = 1;
+        player.multiplierPurchases = {
           2: 0,
           4: 0,
         };
-      }
 
-      updateHighscore() {
-        highscoreDisplay.textContent = `Highscore: ${this.highscore}`;
-      }
-
-      updateLevel() {
-        levelDisplay.textContent = this.level;
-      }
-
-      updateExperience() {
-        experienceDisplay.textContent = this.experience;
-      }
-
-      updateCurrency() {
-        currencyDisplay.textContent = this.currency;
-      }
-
-      updateExpToNextLevel() {
-        expToNextLevelDisplay.textContent = this.expToNextLevel;
-      }
-
-      calculateExpRequiredForNextLevel() {
-        return Math.round(40 * 6 ** (this.level - 1));
-      }
-
-      levelUp() {
-        this.level++;
-        this.expToNextLevel = this.calculateExpRequiredForNextLevel();
-        this.updateLevel();
-        this.updateExpToNextLevel();
-
-        const reward = this.level * 100;
-
-        const rewardItem = document.createElement("li");
-        rewardItem.textContent = `Level ${this.level} Reward: ${reward} XP`;
-        expRewardsList.appendChild(rewardItem);
-
-        if (this.level % 15 === 0) {
-          setTimeout(() => {
-            const rewardsList = document.getElementById("rewards-list");
-            while (rewardsList.firstChild) {
-              rewardsList.removeChild(rewardsList.firstChild);
-            }
-          }, 5000);
-
-          this.currency += 1;
-          this.updateCurrency();
-          localStorage.setItem("currency", this.currency);
-        }
-      }
-    }
-
-    // Визначте об'єкт player після визначення класу Player
-    const player = new Player();
-
-    const board = document.getElementById("board");
-    const scoreDisplay = document.getElementById("score");
-    const highscoreDisplay = document.getElementById("highscore");
-    const levelDisplay = document.getElementById("level");
-    const experienceDisplay = document.getElementById("experience");
-    const expToNextLevelDisplay = document.getElementById("expToNextLevel");
-    const expRewardsList = document.getElementById("rewards-list");
-    const gunshotSound = document.getElementById("gunshot");
-
-    function buyMultiplier(event) {
-      const multiplier = event.target.id === "x2Button" ? 2 : 4;
-      const cost = calculateMultiplierCost(multiplier);
-
-      if (
-        player.currency >= cost &&
-        player.multiplierPurchases[multiplier] < 4
-      ) {
-        player.currency -= cost;
-        player.scoreMultiplier *= multiplier;
-        player.multiplierPurchases[multiplier] += 1;
-
-        localStorage.setItem("currency", player.currency);
-        localStorage.setItem("scoreMultiplier", player.scoreMultiplier);
-        saveMultiplierPurchases();
-
-        updateCurrencyDisplay();
+        player.updateHighscore();
+        player.updateLevel();
+        player.updateExperience();
+        player.updateExpToNextLevel();
+        player.updateCurrency();
         updateScoreMultiplierDisplay();
         updateMultiplierCost();
-      } else if (player.multiplierPurchases[multiplier] >= 4) {
-        alert("You can't buy more than 4 of the same multiplier!");
-      } else {
-        alert(
-          `Not enough currency to buy the ${
-            multiplier === 2 ? "x2" : "x4"
-          } multiplier!`
-        );
+        updateMultiplierButtonsText(); // Оновлення тексту на кнопках множників
       }
-    }
 
-    function updateMultiplierButtonsText() {
-      const x2Button = document.getElementById("x2Button");
-      const x4Button = document.getElementById("x4Button");
-
-      const x2Cost = calculateMultiplierCost(2);
-      const x4Cost = calculateMultiplierCost(4);
-
-      const x2Purchases = player.multiplierPurchases[2];
-      const x4Purchases = player.multiplierPurchases[4];
-
-      x2Button.textContent = `Buy x2 (Cost: ${x2Cost}, Purchases: ${x2Purchases})`;
-      x4Button.textContent = `Buy x4 (Cost: ${x4Cost}, Purchases: ${x4Purchases})`;
-    }
-
-    updateMultiplierButtonsText();
-    player.updateHighscore();
-    player.updateLevel();
-    player.updateExperience();
-    player.updateExpToNextLevel();
-    player.updateCurrency();
-
-    board.addEventListener("click", throwDart);
-
-    function throwDart(event) {
-      const dart = document.createElement("div");
-      dart.className = "dart";
-      board.appendChild(dart);
-
-      const dartRect = dart.getBoundingClientRect();
-      const boardRect = board.getBoundingClientRect();
-      const x = event.clientX - dartRect.width / 2;
-      const y = event.clientY - dartRect.height / 2;
-
-      dart.style.left = `${x}px`;
-      dart.style.top = `${y}px`;
-
-      const distanceFromCenter = Math.sqrt(
-        (x + dartRect.width / 2 - boardRect.width / 2) ** 2 +
-        (y + dartRect.height / 2 - boardRect.height / 2) ** 2
-      );
-
-      player.score += calculateScore(distanceFromCenter);
-      player.experience += calculateScore(distanceFromCenter);
-
-      scoreDisplay.textContent = `Score: ${player.score}`;
-      experienceDisplay.textContent = player.experience;
-
-      if (player.score > player.highscore) {
-        player.highscore = player.score;
-        localStorage.setItem("highscore", player.highscore);
+      function updateAllStats() {
         player.updateHighscore();
+        player.updateLevel();
+        player.updateExperience();
+        player.updateExpToNextLevel();
+        player.updateCurrency();
+        updateScoreMultiplierDisplay();
+        updateMultiplierCost();
+        updateMultiplierButtonsText(); // Оновлення тексту на кнопках множників
       }
 
-      gunshotSound.currentTime = 0;
-      gunshotSound.play();
-
-      animateDart(dart, boardRect);
-
-      if (player.experience >= player.expToNextLevel) {
-        player.levelUp();
-        localStorage.setItem("level", player.level);
-        localStorage.setItem("experience", player.experience);
+      // Оновлення всієї статистики при завантаженні сторінки
+      for (let i = 1; i <= 5; i++) {
+        updateAllStats();
+        updateMultiplierButtonsText();
       }
+      x2Button.addEventListener("click", function () {
+        updateAllStats();
+      });
 
-      player.currency += 1;
-      player.updateCurrency();
-      localStorage.setItem("currency", player.currency);
-    }
-
-    function calculateScore(distance) {
-      const maxRadius = board.clientWidth / 2;
-      const innerBullseyeRadius = maxRadius * 0.1;
-      const outerBullseyeRadius = maxRadius * 0.2;
-
-      if (distance < innerBullseyeRadius) {
-        return 50 * player.scoreMultiplier;
-      } else if (distance < outerBullseyeRadius) {
-        return 25 * player.scoreMultiplier;
-      } else {
-        const percentageFromCenter = 1 - distance / maxRadius;
-        return Math.round(50 * percentageFromCenter * player.scoreMultiplier);
-      }
-    }
-
-    function animateDart(dart, boardRect) {
-      const duration = 500;
-      const startX = parseFloat(dart.style.left);
-      const startY = parseFloat(dart.style.top);
-      const endX = boardRect.width / 2 - dart.clientWidth / 2;
-      const endY = boardRect.height / 2 - dart.clientHeight / 2;
-      const startTime = new Date().getTime();
-
-      function animate() {
-        const currentTime = new Date().getTime();
-        const progress = Math.min((currentTime - startTime) / duration, 1);
-
-        const newX = startX + (endX - startX) * progress;
-        const newY = startY + (endY - startY) * progress;
-
-        dart.style.left = `${newX}px`;
-        dart.style.top = `${newY}px`;
-
-        if (progress < 1) {
-          requestAnimationFrame(animate);
-        } else {
-          dart.remove();
-        }
-      }
-
-      requestAnimationFrame(animate);
-    }
-
-    const resetButton = document.getElementById("resetButton");
-
-    resetButton.addEventListener("click", resetProgress);
-
-    function resetProgress() {
-      localStorage.clear();
-
-      player.score = 0;
-      player.highscore = 0;
-      player.level = 1;
-      player.experience = 0;
-      player.expToNextLevel = player.calculateExpRequiredForNextLevel();
-      player.currency = 0;
-      player.scoreMultiplier = 1;
-      player.multiplierPurchases = {
-        2: 0,
-        4: 0,
-      };
-
-      player.updateHighscore();
-      player.updateLevel();
-      player.updateExperience();
-      player.updateExpToNextLevel();
-      player.updateCurrency();
-      updateScoreMultiplierDisplay();
-      updateMultiplierCost();
-      updateMultiplierButtonsText(); // Оновлення тексту на кнопках множників
-    }
-
-    function updateAllStats() {
-      player.updateHighscore();
-      player.updateLevel();
-      player.updateExperience();
-      player.updateExpToNextLevel();
-      player.updateCurrency();
-      updateScoreMultiplierDisplay();
-      updateMultiplierCost();
-      updateMultiplierButtonsText(); // Оновлення тексту на кнопках множників
-    }
-
-    // Оновлення всієї статистики при завантаженні сторінки
-    for (let i = 1; i <= 5; i++) {
-      updateAllStats();
-      updateMultiplierButtonsText();
-    }
-    x2Button.addEventListener("click", function () {
-      updateAllStats();
-    });
-
-    x4Button.addEventListener("click", function () {
-      updateAllStats();
-    });
-  </script>
-</body>
+      x4Button.addEventListener("click", function () {
+        updateAllStats();
+      });
+    </script>
+  </body>
 </html>
