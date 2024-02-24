@@ -29,19 +29,21 @@
 
         <div id="multipliers">
           <span id="scoreMultiplier">x1</span>
-          <p id="x2CostDisplay">x2 (Cost: <span id="x2Cost">100</span>, Purchases: <span id="x2Purchases">0</span>)</p>
-          <button id="x2Button">Buy x2</button>
-          <p id="x4CostDisplay">x4 (Cost: <span id="x4Cost">200</span>, Purchases: <span id="x4Purchases">0</span>)</p>
-          <button id="x4Button">Buy x4</button>
-          <p>
-            <strong>I advise you to pump only x4 because you can make only 4 purchases in the store.</strong>
+          <p id="x2CostDisplay">
+            x2 (Cost: <span id="x2Cost">100</span>, Purchases:
+            <span id="x2Purchases">0</span>)
           </p>
+          <button id="x2Button">Buy x2</button>
+          <p id="x4CostDisplay">
+            x4 (Cost: <span id="x4Cost">200</span>, Purchases:
+            <span id="x4Purchases">0</span>)
+          </p>
+          <button id="x4Button">Buy x4</button>
         </div>
         <div id="exp-level">
           <p>Level: <span id="level">1</span></p>
           <p>Experience: <span id="experience">0</span></p>
           <p>Experience to Next Level: <span id="expToNextLevel">40</span></p>
-          <p>Experience Rewards:</p>
           <ul id="rewards-list"></ul>
         </div>
       </div>
@@ -78,8 +80,12 @@
         const x2CostDisplay = document.getElementById("x2CostDisplay");
         const x4CostDisplay = document.getElementById("x4CostDisplay");
 
-        x2CostDisplay.textContent = `x2 (Cost: ${calculateMultiplierCost(2)}, Purchases: ${player.multiplierPurchases[2]})`;
-        x4CostDisplay.textContent = `x4 (Cost: ${calculateMultiplierCost(4)}, Purchases: ${player.multiplierPurchases[4]})`;
+        x2CostDisplay.textContent = `x2 (Cost: ${calculateMultiplierCost(
+          2
+        )}, Purchases: ${player.multiplierPurchases[2]})`;
+        x4CostDisplay.textContent = `x4 (Cost: ${calculateMultiplierCost(
+          4
+        )}, Purchases: ${player.multiplierPurchases[4]})`;
 
         const x2PurchasesDisplay = document.getElementById("x2Purchases");
         const x4PurchasesDisplay = document.getElementById("x4Purchases");
@@ -147,7 +153,7 @@
           const reward = this.level * 100;
 
           const rewardItem = document.createElement("li");
-          rewardItem.textContent = `Level ${this.level} Reward: ${reward} XP`;
+          rewardItem.textContent = `Level ${this.level}`;
           expRewardsList.appendChild(rewardItem);
 
           if (this.level % 15 === 0) {
@@ -216,9 +222,6 @@
 
         const x2Purchases = player.multiplierPurchases[2];
         const x4Purchases = player.multiplierPurchases[4];
-
-        x2Button.textContent = `Buy x2 (Cost: ${x2Cost}, Purchases: ${x2Purchases})`;
-        x4Button.textContent = `Buy x4 (Cost: ${x4Cost}, Purchases: ${x4Purchases})`;
       }
       updateMultiplierButtonsText();
       player.updateHighscore();
